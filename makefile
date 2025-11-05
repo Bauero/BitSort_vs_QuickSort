@@ -21,7 +21,7 @@ $(TARGET): main.c $(OBJECTS)
 	$(CC) $(CFLAGS) main.c $(OBJECTS) -o $(BINDIR)/$(TARGET)
 
 run: $(TARGET)
-	./$(TARGET)
+	./$(BINDIR)/$(TARGET)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
