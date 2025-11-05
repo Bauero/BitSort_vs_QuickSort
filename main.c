@@ -1,161 +1,88 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
+#include <dispatch/dispatch.h>
+#include "functions.h"
 
-#define NUMBERS_LIMIT 10
-#define DEBUG 1
-#define TRACE 1
+typedef unsigned long elem_t;
 
-static long SORTED_1[NUMBERS_LIMIT];
-static int sorted_counter = 0;
+// ----------------- KONFIGURACJA -----------------
+#define ARRAY_SIZE 500000      // liczba elementów
+#define RUNS 100               // liczba powtórzeń
+#define PARALLEL_THRESHOLD 100000
+#define SWAP(a, b) { elem_t tmp = (a); (a) = (b); (b) = tmp; }
+// ------------------------------------------------
 
-void generuj_liczby_losowe(long *array, int size);
-void quick_sort(long *array, int length, int iter);
-
-int main() {
-    
-    long losowe[NUMBERS_LIMIT];
-    generuj_liczby_losowe(losowe, NUMBERS_LIMIT);
-    
-    if (TRACE) {
-        printf("Liczby wylosowane:\n");
-        for (int i = 0; i < NUMBERS_LIMIT; i++){
-            printf("%ld", losowe[i]);
-            (i < NUMBERS_LIMIT) ? printf(", ") : printf("\n");
-        }
-    }
-    quick_sort(losowe, NUMBERS_LIMIT, ((int)sizeof(long)) * 8);
-    
-    if (TRACE) {
-        printf("\nLiczby posortowane - SORTED_1:\n");
-        for (int i = 0; i < NUMBERS_LIMIT; i++){
-            printf("%ld", SORTED_1[i]);
-            (i < NUMBERS_LIMIT) ? printf(", ") : printf("\n");
-        }
+int main(void) {
+    elem_t *arr_base = malloc(ARRAY_SIZE * sizeof(elem_t));
+    elem_t *arr_bit_seq = malloc(ARRAY_SIZE * sizeof(elem_t));
+    elem_t *arr_bit_par = malloc(ARRAY_SIZE * sizeof(elem_t));
+    elem_t *arr_std_seq = malloc(ARRAY_SIZE * sizeof(elem_t));
+    elem_t *arr_std_par = malloc(ARRAY_SIZE * sizeof(elem_t));
+    if (!arr_base || !arr_bit_seq || !arr_bit_par || !arr_std_seq || !arr_std_par) {
+        perror("malloc failed");
+        return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < NUMBERS_LIMIT - 1 ; i++)
-    {
-        if (! (SORTED_1[i] <= SORTED_1[i+1])) {
-            printf("\nZnaleziono nierówność ! : %ld nie jest mniejsze równe %ld", SORTED_1[i], SORTED_1[i+1]);
-            return 1;
+    double total_bit_seq = 0.0, total_bit_par = 0.0;
+    double total_std_seq = 0.0, total_std_par = 0.0;
+    double start, end;
+
+    for (int r = 0; r < RUNS; r++) {
+        generuj_liczby_losowe(arr_base, ARRAY_SIZE);
+
+        // Przygotowanie czystych kopii
+        for (size_t i = 0; i < ARRAY_SIZE; i++) {
+            arr_bit_seq[i] = arr_base[i];
+            arr_bit_par[i] = arr_base[i];
+            arr_std_seq[i] = arr_base[i];
+            arr_std_par[i] = arr_base[i];
         }
+
+
+        // 1. Bitowy sekwencyjny
+        start = now_sec();
+        bit_quicksort_seq(arr_bit_seq, 0, ARRAY_SIZE - 1, (int)(sizeof(elem_t)*8 - 1));
+        end = now_sec();
+        total_bit_seq += (end - start);
+        if (!verify_sorted(arr_bit_seq, ARRAY_SIZE)) { fprintf(stderr,"Błąd bit_seq\n"); break; }
+
+        // 2. Bitowy równoległy
+        start = now_sec();
+        bit_quicksort_parallel(arr_bit_par, ARRAY_SIZE);
+        end = now_sec();
+        total_bit_par += (end - start);
+        if (!verify_sorted(arr_bit_par, ARRAY_SIZE)) { fprintf(stderr,"Błąd bit_par\n"); break; }
+
+        // 3. Klasyczny sekwencyjny
+        start = now_sec();
+        quicksort_seq(arr_std_seq, 0, ARRAY_SIZE - 1);
+        end = now_sec();
+        total_std_seq += (end - start);
+        if (!verify_sorted(arr_std_seq, ARRAY_SIZE)) { fprintf(stderr,"Błąd std_seq\n"); break; }
+
+        // 4. Klasyczny równoległy
+        start = now_sec();
+        quicksort_parallel(arr_std_par, ARRAY_SIZE);
+        end = now_sec();
+        total_std_par += (end - start);
+        if (!verify_sorted(arr_std_par, ARRAY_SIZE)) { fprintf(stderr,"Błąd std_par\n"); break; }
     }
-    printf("Wszystko dobrze posortowane :)");
+
+    printf("============================================================\n");
+    printf("Benchmark sortowań (%d powtórzeń, %d elementów)\n", RUNS, ARRAY_SIZE);
+    printf("------------------------------------------------------------\n");
+    printf("Bitowy quicksort (1 rdzeń): total %.4fs | avg %.6fs\n", total_bit_seq, total_bit_seq / RUNS);
+    printf("Bitowy quicksort (multi):  total %.4fs | avg %.6fs\n", total_bit_par, total_bit_par / RUNS);
+    printf("Klasyczny quicksort (1 rdzeń): total %.4fs | avg %.6fs\n", total_std_seq, total_std_seq / RUNS);
+    printf("Klasyczny quicksort (multi):  total %.4fs | avg %.6fs\n", total_std_par, total_std_par / RUNS);
+    printf("------------------------------------------------------------\n");
+    printf("Przyspieszenie bitowego:  x%.2f\n", total_bit_seq / total_bit_par);
+    printf("Przyspieszenie klasycznego: x%.2f\n", total_std_seq / total_std_par);
+    printf("============================================================\n");
+
+    free(arr_base); free(arr_bit_seq); free(arr_bit_par);
+    free(arr_std_seq); free(arr_std_par);
     return 0;
 }
-
-void quick_sort(long *array, int length, int iter) {
-    
-    if (DEBUG) {
-        printf("\nStarting quicksort with iter = %d, length = %d and numbers: ", iter, length);
-        for (int i = 0; i < length; i++){
-            printf("%ld, ", array[i]);
-        }
-        printf("\n");
-    }
-    
-    if (length == 0 ) {return; }
-    if (iter < 0) { return; }
-    
-    long power = 1 << iter;
-    long smaller_counter = 0;
-    long greater_counter = 0;
-    long first_smaller = 0;
-    int smaller_anded = 1;
-    long first_greater = 0;
-    int greater_anded = 1;
-    
-    for (int i = 0; i < length; i++) {
-        if ((array[i] & power) == 0)
-        { 
-            if (smaller_counter == 0){
-                first_smaller = array[i];
-            }
-            smaller_anded = (first_smaller == array[i]) * smaller_anded;
-            ++smaller_counter;
-            
-        }
-        else {
-            if (greater_counter == 0){
-                first_greater = array[i];
-            }
-            greater_anded = (first_greater == array[i]) * greater_anded;
-            ++greater_counter;
-        }
-    }
-    
-    if (DEBUG) {
-        printf("First smaller: %ld, smaller anded: %d\n", first_smaller, smaller_anded);
-        printf("First greater: %ld, greater anded: %d\n", first_greater, greater_anded);
-    }
-
-    if (smaller_counter == 1) {
-        if (DEBUG) {
-            printf("Iteration %d - smaller: %ld - adding value to sorted numbers\n", iter, first_smaller);
-            printf("Adding %ld\n", first_smaller);
-        }
-        SORTED_1[sorted_counter++] = first_smaller;
-    }
-    else if (smaller_counter > 1) {
-        if (smaller_anded == 1) {
-            if (DEBUG) {
-                printf("All numbers from this iteration are added to list\n");
-            }
-            for (int i = 0; i < smaller_counter; i++){
-                printf("Adding %ld\n", array[i]);
-                SORTED_1[sorted_counter++] = first_smaller;
-            }
-        }
-        else {
-            if (DEBUG) { printf("Iteration %d - smaller: ", iter); }
-            long *smaller = (long *)calloc(smaller_counter, sizeof(long));
-            long small_tab_counter = 0;
-            for (int i = 0; i < length; i++) {
-                if ((array[i] & power) == 0) {
-                    smaller[small_tab_counter++] = array[i];
-                    if (DEBUG) { printf("%ld, ", array[i]); }
-                }
-            }
-            if (DEBUG) { printf("\n"); }
-            quick_sort(smaller, smaller_counter, iter - 1);
-            free(smaller);
-        }
-    }
-    
-    if (greater_counter == 1) {
-        if (DEBUG) { printf("Iteration %d - greater: %ld\n", iter, first_greater); }
-        if (DEBUG) { printf("Adding %ld\n", first_greater); }
-        SORTED_1[sorted_counter++] = first_greater;
-    }
-    else if (greater_counter > 1)
-    {
-        if ( greater_anded == 1 ) {
-            if (DEBUG) { printf("All numbers from this iteration are added to list\n"); }
-            for (int i = 0; i < greater_counter; i++){
-                if (DEBUG) { printf("Adding %ld\n", array[i]); }
-                SORTED_1[sorted_counter++] = first_greater;
-            }
-        }
-        else {
-            if (DEBUG) { printf("Iteration %d - greater: ", iter); }
-            long *greater = (long *)calloc(greater_counter, sizeof(long));
-            long great_tab_counter = 0;
-            for (int i = 0; i < length; i++) {
-                if ((array[i] & power) != 0) {
-                    greater[great_tab_counter++] = array[i];
-                    if (DEBUG) { printf("%ld, ", array[i]); }
-                }
-            }
-            if (DEBUG) { printf("\n"); }
-            quick_sort(greater, greater_counter, iter - 1);
-            free(greater);
-        }
-    }
-}
-
-void generuj_liczby_losowe(long *array, int size) {
-    for (int i = 0; i < size; i++) {
-        array[i] = arc4random();
-    }
-}
-

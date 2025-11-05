@@ -5,7 +5,7 @@
 #include <dispatch/dispatch.h>  // GCD for parallelism
 
 typedef unsigned long elem_t;
-#define SWAP(a, b) do { elem_t tmp = (a); (a) = (b); (b) = tmp; } while (0)
+#define SWAP(a, b) { elem_t tmp = (a); (a) = (b); (b) = tmp; }
 
 // Threshold below which sorting runs sequentially
 #define PARALLEL_THRESHOLD 50000
