@@ -78,7 +78,7 @@ static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
             j--;
         } else break;
     }
-    if ((right - left) > 10000) {
+    if ((right - left) > PARALLEL_THRESHOLD) {
         dispatch_group_async(group, queue, ^{
             qs_bin_par(arr, left, j, bit - 1, queue, group);
         });

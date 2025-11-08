@@ -41,7 +41,7 @@ static inline void qs_std_par(elem_t *arr, long left, long right,
             j--;
         }
     }
-    if ((right - left) > 10000) {
+    if ((right - left) > PARALLEL_THRESHOLD) {
         dispatch_group_async(group, queue, ^{
             qs_std_par(arr, left, j, queue, group);
         });

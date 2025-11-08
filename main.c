@@ -95,11 +95,9 @@ int main(int argc, char *argv[]) {
 
     if (argc >= 2){
         size = atol(argv[1]);
-        printf("Size %ld\n", size);
     }
     if (argc >= 3) {
         runs = atol(argv[2]);
-        printf("runs %ld\n", runs);
     }
 
     array_list arrays;
@@ -174,14 +172,15 @@ int main(int argc, char *argv[]) {
         }
     }
     
-    printf("\n");
+    // printf("\x1b[1F");
+    printf("\x1b[2K\r");
     printf("============================================================\n");
     printf("Benchmark sortowań (%ld powtórzeń, %ld elementów)\n", runs, size);
     printf("------------------------------------------------------------\n");
     printf("Bitowy (1 rdzeń):                         %.4fs | avg %.6fs\n", total_bit_seq, total_bit_seq / runs);
     printf("Bitowy (multi):                           %.4fs | avg %.6fs\n", total_bit_par, total_bit_par / runs);
-    printf("Bitowy + ograniczenie zakresu (1 rdzeń):  %.4fs | avg %.6fs\n", total_bit_seq_new_start, total_bit_seq / runs);
-    printf("Bitowy + ograniczenie zakresu (multi):    %.4fs | avg %.6fs\n", total_bit_par_new_start, total_bit_par / runs);
+    printf("Bitowy + ograniczenie zakresu (1 rdzeń):  %.4fs | avg %.6fs\n", total_bit_seq_new_start, total_bit_seq_new_start / runs);
+    printf("Bitowy + ograniczenie zakresu (multi):    %.4fs | avg %.6fs\n", total_bit_par_new_start, total_bit_par_new_start / runs);
     printf("Klasyczny (1 rdzeń):                      %.4fs | avg %.6fs\n", total_std_seq, total_std_seq / runs);
     printf("Klasyczny (multi):                        %.4fs | avg %.6fs\n", total_std_par, total_std_par / runs);
     printf("------------------------------------------------------------\n");
