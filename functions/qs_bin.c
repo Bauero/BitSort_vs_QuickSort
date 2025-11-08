@@ -2,7 +2,7 @@
 #include <dispatch/dispatch.h>
 #include "__init__.h"
 
-static inline void _qs_bin_seq(elem_t *arr, long left, long right, int bit) {
+static inline void qs_bin_seq(elem_t *arr, long left, long right, int bit) {
     if (left >= right || bit < 0) return;
 
     elem_t mask = 1UL << bit;
@@ -18,8 +18,8 @@ static inline void _qs_bin_seq(elem_t *arr, long left, long right, int bit) {
             if (0 > --j) break; // prevent underflow
         }
     }
-    if (left < j) _qs_bin_seq(arr, left, j, bit - 1);
-    if (i < right) _qs_bin_seq(arr, i, right, bit - 1);
+    if (left < j) qs_bin_seq(arr, left, j, bit - 1);
+    if (i < right) qs_bin_seq(arr, i, right, bit - 1);
 }
 
 static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
@@ -45,8 +45,8 @@ static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
             qs_bin_par(arr, i, right, bit - 1, queue, group);
         });
     } else {
-        _qs_bin_seq(arr, left, j, bit - 1);
-        _qs_bin_seq(arr, i, right, bit - 1);
+        qs_bin_seq(arr, left, j, bit - 1);
+        qs_bin_seq(arr, i, right, bit - 1);
     }
 }
 
@@ -58,5 +58,5 @@ void qs_bin_parallel(elem_t *arr, size_t n) {
 }
 
 void qs_bin_sequential(elem_t *arr, long left, long right, int bit){
-    _qs_bin_seq(arr, left, right, bit);
+    qs_bin_seq(arr, left, right, bit);
 }
