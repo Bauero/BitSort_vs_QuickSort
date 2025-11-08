@@ -5,6 +5,6 @@
 
 int verify_sorted(const elem_t *arr, long n);
 void gen_rand_num(elem_t *arr, long n);
-void gen_rand_num_range(elem_t *arr, long n, long limit);
+void gen_rand_num_range(elem_t *arr, long n);
 
 #endif

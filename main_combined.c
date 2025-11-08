@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <dispatch/dispatch.h>
 
-typedef unsigned int elem_t;
+typedef unsigned long elem_t;
 
-#define ARRAY_SIZE 500000      // liczba elementów
+#define ARRAY_SIZE 1000000      // liczba elementów
 #define RUNS 100               // liczba powtórzeń
-#define PARALLEL_THRESHOLD 100000
+#define PARALLEL_THRESHOLD 1
 #define SWAP(a, b) { elem_t tmp = (a); (a) = (b); (b) = tmp; }
 
 static inline double now_sec(void) {
@@ -19,7 +19,7 @@ static inline double now_sec(void) {
 
 static inline void generuj_liczby_losowe(elem_t *arr, size_t n) {
     for (size_t i = 0; i < n; i++)
-        arr[i] = arc4random_uniform(sizeof(elem_t));
+        arr[i] = arc4random_uniform((long)((sizeof(elem_t) << 3) - 1));
 }
 
 static inline int verify_sorted(const elem_t *arr, size_t n) {

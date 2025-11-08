@@ -1,7 +1,7 @@
 #include <dispatch/dispatch.h>
 #include "__init__.h"
 
-static inline elem_t median_of_three(elem_t *a, size_t x, size_t y, size_t z) {
+static inline elem_t median_of_three(elem_t *a, long x, long y, long z) {
     elem_t A = a[x], B = a[y], C = a[z];
     if ((A < B && B < C) || (C < B && B < A)) return B;
     else if ((B < A && A < C) || (C < A && A < B)) return A;
@@ -41,7 +41,7 @@ static inline void qs_std_par(elem_t *arr, long left, long right,
             j--;
         }
     }
-    if (right - left) {
+    if ((right - left) > 10000) {
         dispatch_group_async(group, queue, ^{
             qs_std_par(arr, left, j, queue, group);
         });

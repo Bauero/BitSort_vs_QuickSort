@@ -2,51 +2,6 @@
 #include <dispatch/dispatch.h>
 #include "__init__.h"
 
-
-// static inline int initial_data_filter(elem_t* arr, size_t size) {
-//     int s = sizeof(elem_t);
-//     int bit = (s << 3) - 1;
-    
-//     elem_t greatest_in_array = 0;
-//     elem_t max_value = 1ULL << bit;
-
-//     for (int n = 0; n < size;){
-//         if (greatest_in_array < arr[n]){
-//             greatest_in_array = arr[n];
-//         }
-//         if (max_value <= greatest_in_array) break;
-//     }
-
-//     int counter = 0;
-//     while (greatest_in_array > 0) {
-//         greatest_in_array >>= 1;
-//         ++counter;
-//     }
-//     return counter;
-    
-//     // for (long n = 0; n < size;) {
-//     //     all_values_orred |= arr[n];
-//     //     ++n;
-//     //     // every n'th (n == size) iteration check if all_values_orred already
-//     //     // have msb = 1 -> so we already know some numbers uses all bits
-//     //     // and we can finish optimization
-//     //     if (!(n & bit) && (all_values_orred & max_value)) break;
-//     // }
-
-//     // // Return top bit which could be used to divide data
-//     // if (all_values_orred >= max_value){
-//     //     return bit;
-//     // } else {
-//     //     int counter = 0;
-//     //     while ((max_value > 0) && (max_value > all_values_orred)) {
-//     //         max_value >>= 1;
-//     //         ++counter;
-//     //     }
-//     //     return counter;
-//     // }
-
-// }
-
 /**
  * @brief Recursive binary quicksort implementation that sorts array by comparing bits
  * 
@@ -68,21 +23,21 @@
  * Space Complexity: O(log n) due to recursion stack
  */
 static inline void qs_bin_seq(elem_t *arr, long left, long right, int bit) {
-    if (left >= right || bit < 0) return;
-
-    elem_t mask = 1;
-    mask <<= bit;
-    elem_t i = left, j = right;
-
+    if (left >= right) return;
+    if (bit < 0) return; /* stop when no more bits */
+    elem_t mask = ((elem_t)1 << bit);
+    long i = left, j = right;
     while (i <= j) {
         while (i <= right && (arr[i] & mask) == 0) ++i;
         while (j >= left && (arr[j] & mask) != 0) --j;
-
+        
         if (i < j) {
             SWAP(arr[i], arr[j]);
-            ++i;
-            if (0 > --j) break; // prevent underflow
-        }
+            i++;
+            if (j == 0) break; // prevent underflow
+            j--;
+        } else break;
+
     }
     if (left < j) qs_bin_seq(arr, left, j, bit - 1);
     if (i < right) qs_bin_seq(arr, i, right, bit - 1);
@@ -109,8 +64,9 @@ static inline void qs_bin_seq(elem_t *arr, long left, long right, int bit) {
  */
 static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
                               dispatch_queue_t queue, dispatch_group_t group) {
-    if (left >= right || bit < 0) return;
-    elem_t mask = 1UL << bit;
+    if (left >= right) return;
+    if (bit < 0) return;
+    elem_t mask = ((elem_t)1 << bit);
     long i = left, j = right;
     while (i <= j) {
         while (i <= right && (arr[i] & mask) == 0) ++i;
@@ -120,9 +76,9 @@ static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
             i++;
             if (j == 0) break; // prevent underflow
             j--;
-        }
+        } else break;
     }
-    if (right - left) {
+    if ((right - left) > 10000) {
         dispatch_group_async(group, queue, ^{
             qs_bin_par(arr, left, j, bit - 1, queue, group);
         });
@@ -130,23 +86,24 @@ static inline void qs_bin_par(elem_t *arr, long left, long right, int bit,
             qs_bin_par(arr, i, right, bit - 1, queue, group);
         });
     } else {
-        qs_bin_seq(arr, left, j, bit - 1);
-        qs_bin_seq(arr, i, right, bit - 1);
+        if (left < j) qs_bin_seq(arr, left, j, bit - 1);
+        if (i < right) qs_bin_seq(arr, i, right, bit - 1);
     }
 }
 
-void qs_bin_parallel(elem_t *arr, long n) {
+void qs_bin_parallel(elem_t *arr, long n, int bit) {
     dispatch_queue_t queue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
     dispatch_group_t group = dispatch_group_create();
-    // int bit = initial_data_filter(arr, n);
-    int bit = (int)(sizeof(elem_t) << 3) - 1;
+    int bits = (int)(sizeof arr[0] * 8);
+    if (bit >= bits) bit = bits - 1;
     qs_bin_par(arr, 0, n, bit, queue, group);
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    // dispatch_release(group); // optional on older APIs
 }
 
-void qs_bin_sequential(elem_t *arr, long n){
-    // int bit = initial_data_filter(arr, n);
-    int bit = (int)(sizeof(elem_t) << 3) - 1;
-    // printf("n = %ld, bit = %ld\n", n-1, bit);
+void qs_bin_sequential(elem_t *arr, long n, int bit){
+    int bits = (int)(sizeof arr[0] * 8);
+    if (bit >= bits) bit = bits - 1;
+    if (bit < 0) return;
     qs_bin_seq(arr, 0, n, bit);
 }
