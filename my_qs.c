@@ -32,8 +32,7 @@ void bit_quicksort(unsigned long* array, int left, int right, int bit) {
             j--;
         }
     }
-
-    // Rekurencyjnie sortujemy po kolejnym bicie
+    
     bit_quicksort(array, left, j, bit - 1);   // lewa część (bit = 0)
     bit_quicksort(array, i, right, bit - 1);  // prawa część (bit = 1)
 }

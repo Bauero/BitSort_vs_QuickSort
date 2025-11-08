@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef unsigned long elem_t;
+#include "__init__.h"
 
 void gen_rand_num(elem_t *arr, size_t n) {
     for (size_t i = 0; i < n; i++)

@@ -7,8 +7,7 @@
 // ----------------------------------- CONFIG ----------------------------------
 #define ARRAY_SIZE 500000      // liczba elementów
 #define RUNS 100               // liczba powtórzeń
-#define PARALLEL_THRESHOLD 100000
-#define SWAP(a, b) { elem_t tmp = (a); (a) = (b); (b) = tmp; }
+#define PARALLEL_THRESHOLD 100
 
 
 // ----------------------------- CUSTOM STRUCTURES -----------------------------
@@ -59,7 +58,7 @@ void free_arrays(array_list *arrays) {
 }
 
 void refill_arrays(array_list arrays, int arr_size){
-    gen_rand_num(arrays.arr_base, arr_size);
+    gen_rand_num_range(arrays.arr_base, arr_size, sizeof(elem_t));
     for (size_t i = 0; i < arr_size; i++) {
         arrays.arr_bit_seq[i] = arrays.arr_base[i];
         arrays.arr_bit_par[i] = arrays.arr_base[i];
@@ -84,7 +83,7 @@ int main() {
 
         // 1. Bitowy sekwencyjny
         start = now_sec();
-        qs_bin_single(arrays.arr_bit_seq, 0, ARRAY_SIZE - 1, (int)(sizeof(elem_t)*8 - 1));
+        qs_bin_sequential(arrays.arr_bit_seq, 0, ARRAY_SIZE - 1, (int)(sizeof(elem_t)*8 - 1));
         end = now_sec();
         total_bit_seq += (end - start);
         if (!verify_sorted(arrays.arr_bit_seq, ARRAY_SIZE)) { fprintf(stderr,"Błąd bit_seq\n"); break; }
@@ -98,7 +97,7 @@ int main() {
 
         // 3. Klasyczny sekwencyjny
         start = now_sec();
-        qs_std_single(arrays.arr_std_seq, 0, ARRAY_SIZE - 1);
+        qs_std_sequential(arrays.arr_std_seq, 0, ARRAY_SIZE - 1);
         end = now_sec();
         total_std_seq += (end - start);
         if (!verify_sorted(arrays.arr_std_seq, ARRAY_SIZE)) { fprintf(stderr,"Błąd std_seq\n"); break; }
