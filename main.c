@@ -8,6 +8,8 @@ typedef struct {
     elem_t *arr_base;
     elem_t *arr_bit_seq;
     elem_t *arr_bit_par;
+    elem_t *arr_bit_seq_shift;
+    elem_t *arr_bit_par_shift;
     elem_t *arr_std_seq;
     elem_t *arr_std_par;
 } array_list;
@@ -19,44 +21,47 @@ static inline double now_sec(void) {
     return ts.tv_sec + ts.tv_nsec * 1e-9;
 }
 
+static void free_arrays(array_list *arrays) {
+    free(arrays->arr_base);
+    free(arrays->arr_bit_seq);
+    free(arrays->arr_bit_par);
+    free(arrays->arr_bit_seq_shift);
+    free(arrays->arr_bit_par_shift);
+    free(arrays->arr_std_seq);
+    free(arrays->arr_std_par);
+}
+
 static int create_arrays(array_list *arrays, long arr_size) {
-    arrays->arr_base    = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_seq = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_par = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_std_seq = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_std_par = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_base            = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_bit_seq         = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_bit_par         = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_bit_seq_shift   = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_bit_par_shift   = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_std_seq         = malloc(arr_size * sizeof(elem_t));
+    arrays->arr_std_par         = malloc(arr_size * sizeof(elem_t));
     
     if (!arrays->arr_base
-        || !arrays->arr_bit_seq || !arrays->arr_bit_par 
+        || !arrays->arr_bit_seq || !arrays->arr_bit_par
+        || !arrays->arr_bit_seq_shift || !arrays->arr_bit_par_shift
         || !arrays->arr_std_seq || !arrays->arr_std_par) {
         
-        free(arrays->arr_base);
-        free(arrays->arr_bit_seq);
-        free(arrays->arr_bit_par);
-        free(arrays->arr_std_seq);
-        free(arrays->arr_std_par);
-        
+        free_arrays(arrays);
         perror("malloc failed");
         return -1;
     }
     return 0;
 }
 
-static void free_arrays(array_list *arrays) {
-    free(arrays->arr_base);
-    free(arrays->arr_bit_seq);
-    free(arrays->arr_bit_par);
-    free(arrays->arr_std_seq);
-    free(arrays->arr_std_par);
-}
-
 static void refill_arrays(array_list arrays, long arr_size){
     gen_rand_num_range(arrays.arr_base, arr_size);
     for (long i = 0; i < arr_size; i++) {
-        arrays.arr_bit_seq[i] = arrays.arr_base[i];
-        arrays.arr_bit_par[i] = arrays.arr_base[i];
-        arrays.arr_std_seq[i] = arrays.arr_base[i];
-        arrays.arr_std_par[i] = arrays.arr_base[i];
+        // if (i < 1) printf("%ld\n",arrays.arr_base[i]);
+        arrays.arr_bit_seq[i]       = arrays.arr_base[i];
+        arrays.arr_bit_par[i]       = arrays.arr_base[i];
+        arrays.arr_bit_seq_shift[i] = arrays.arr_base[i];
+        arrays.arr_bit_par_shift[i] = arrays.arr_base[i];
+        arrays.arr_std_seq[i]       = arrays.arr_base[i];
+        arrays.arr_std_par[i]       = arrays.arr_base[i];
     }
 }
 
@@ -133,20 +138,20 @@ int main(int argc, char *argv[]) {
         
         // 3. Bitowy sekwencyjny z obliczeniem elementu maksymalnego
         start = now_sec();
-        qs_bin_sequential(arrays.arr_bit_seq, size - 1, initial_data_filter(arrays.arr_bit_seq, size));
+        qs_bin_sequential(arrays.arr_bit_seq_shift, size - 1, initial_data_filter(arrays.arr_bit_seq_shift, size));
         end = now_sec();
         total_bit_seq_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_seq, size)) {
+        if (!verify_sorted(arrays.arr_bit_seq_shift, size)) {
             fprintf(stderr,"Błąd bit_seq + \n");
             break; 
         }
 
         // 4. Bitowy równoległy z obliczeniem elementu maksymalnego
         start = now_sec();
-        qs_bin_parallel(arrays.arr_bit_par, size - 1, initial_data_filter(arrays.arr_bit_seq, size));
+        qs_bin_parallel(arrays.arr_bit_par_shift, size - 1, initial_data_filter(arrays.arr_bit_par_shift, size));
         end = now_sec();
         total_bit_par_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_par, size)) {
+        if (!verify_sorted(arrays.arr_bit_par_shift, size)) {
             fprintf(stderr,"Błąd bit_par + \n");
             break;
         }
@@ -172,7 +177,6 @@ int main(int argc, char *argv[]) {
         }
     }
     
-    // printf("\x1b[1F");
     printf("\x1b[2K\r");
     printf("============================================================\n");
     printf("Benchmark sortowań (%ld powtórzeń, %ld elementów)\n", runs, size);
