@@ -3,7 +3,7 @@
 
 #include "__init__.h"
 
-void qs_std_sequential(elem_t *a, long left, long right);
-void qs_std_parallel(elem_t *a, size_t n, int parallel_threshold);
+void qs_std_sequential(elem_t *a, long n);
+void qs_std_parallel(elem_t *a, long n);
 
 #endif

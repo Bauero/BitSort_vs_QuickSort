@@ -27,7 +27,7 @@ static inline void qs_std_seq(elem_t *arr, long left, long right) {
 }
 
 static inline void qs_std_par(elem_t *arr, long left, long right,
-                   dispatch_queue_t queue, dispatch_group_t group) {
+                              dispatch_queue_t queue, dispatch_group_t group) {
     if (left >= right) return;
     elem_t pivot = median_of_three(arr, left, (left + right)/2, right);
     long i = left, j = right;
@@ -41,7 +41,7 @@ static inline void qs_std_par(elem_t *arr, long left, long right,
             j--;
         }
     }
-    if ((right - left) > PARALLEL_THRESHOLD) {
+    if (right - left) {
         dispatch_group_async(group, queue, ^{
             qs_std_par(arr, left, j, queue, group);
         });
@@ -54,13 +54,13 @@ static inline void qs_std_par(elem_t *arr, long left, long right,
     }
 }
 
-void qs_std_parallel(elem_t *a, size_t n) {
+void qs_std_parallel(elem_t *a, long n) {
     dispatch_queue_t queue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
     dispatch_group_t group = dispatch_group_create();
-    qs_std_par(a, 0, n - 1, queue, group);
+    qs_std_par(a, 0, n, queue, group);
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }
 
-void qs_std_sequential(elem_t *a, long left, long right){
-    qs_std_seq(a, left, right);
+void qs_std_sequential(elem_t *a, long n){
+    qs_std_seq(a, 0, n);
 }
