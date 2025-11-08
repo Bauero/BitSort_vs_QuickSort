@@ -7,7 +7,6 @@
 // ----------------------------------- CONFIG ----------------------------------
 #define ARRAY_SIZE 500000      // liczba elementów
 #define RUNS 100               // liczba powtórzeń
-#define PARALLEL_THRESHOLD 100
 
 
 // ----------------------------- CUSTOM STRUCTURES -----------------------------
