@@ -116,82 +116,82 @@ int main(int argc, char *argv[]) {
         fflush(stdout);
         refill_arrays(arrays, size);
 
-        // 1. Bitowy sekwencyjny
+        // 1.  Binary sequential
         start = now_sec();
         qs_bin_sequential(arrays.arr_bit_seq, size - 1, enum_size);
         end = now_sec();
         total_bit_seq += (end - start);
         if (!verify_sorted(arrays.arr_bit_seq, size)) {
-            fprintf(stderr,"Błąd bit_seq\n");
+            fprintf(stderr,"Error with sorting binary sequential\n");
             break; 
         }
 
-        // 2. Bitowy równoległy
+        // 2. Binary parallel
         start = now_sec();
         qs_bin_parallel(arrays.arr_bit_par, size - 1, enum_size);
         end = now_sec();
         total_bit_par += (end - start);
         if (!verify_sorted(arrays.arr_bit_par, size)) {
-            fprintf(stderr,"Błąd bit_par\n");
+            fprintf(stderr,"Error with sorting binary parallel\n");
             break;
         }
         
-        // 3. Bitowy sekwencyjny z obliczeniem elementu maksymalnego
+        // 3. Binary sequential with initial reduction of starting bit
         start = now_sec();
         qs_bin_sequential(arrays.arr_bit_seq_shift, size - 1, initial_data_filter(arrays.arr_bit_seq_shift, size));
         end = now_sec();
         total_bit_seq_new_start += (end - start);
         if (!verify_sorted(arrays.arr_bit_seq_shift, size)) {
-            fprintf(stderr,"Błąd bit_seq + \n");
+            fprintf(stderr,"Error with sorting Binary sequential with initial reduction of starting bit\n");
             break; 
         }
 
-        // 4. Bitowy równoległy z obliczeniem elementu maksymalnego
+        // 4. Binary parallel with initial reduction of starting bit
         start = now_sec();
         qs_bin_parallel(arrays.arr_bit_par_shift, size - 1, initial_data_filter(arrays.arr_bit_par_shift, size));
         end = now_sec();
         total_bit_par_new_start += (end - start);
         if (!verify_sorted(arrays.arr_bit_par_shift, size)) {
-            fprintf(stderr,"Błąd bit_par + \n");
+            fprintf(stderr,"Error with sorting binary parallel with initial reduction of starting bit\n");
             break;
         }
 
-        // 5. Klasyczny sekwencyjny
+        // 5. Clasical sequential Quicksort
         start = now_sec();
         qs_std_sequential(arrays.arr_std_seq, size - 1);
         end = now_sec();
         total_std_seq += (end - start);
         if (!verify_sorted(arrays.arr_std_seq, size)) {
-            fprintf(stderr,"Błąd std_seq\n");
+            fprintf(stderr,"Error with sorting clasical sequential Quicksort\n");
             break;
         }
 
-        // 6. Klasyczny równoległy
+        // 6. Clasical parallel quicksort
         start = now_sec();
         qs_std_parallel(arrays.arr_std_par, size -1);
         end = now_sec();
         total_std_par += (end - start);
         if (!verify_sorted(arrays.arr_std_par, size)) {
-            fprintf(stderr,"Błąd std_par\n");
+            fprintf(stderr,"Error with sorting clasical parallel quicksort\n");
             break;
         }
     }
     
     printf("\x1b[2K\r");
     printf("============================================================\n");
-    printf("Benchmark sortowań (%ld powtórzeń, %ld elementów)\n", runs, size);
+    printf("Benchmark (%ld runs, %ld elements)\n", runs, size);
     printf("------------------------------------------------------------\n");
-    printf("Bitowy (1 rdzeń):                         %.4fs | avg %.6fs\n", total_bit_seq, total_bit_seq / runs);
-    printf("Bitowy (multi):                           %.4fs | avg %.6fs\n", total_bit_par, total_bit_par / runs);
-    printf("Bitowy + ograniczenie zakresu (1 rdzeń):  %.4fs | avg %.6fs\n", total_bit_seq_new_start, total_bit_seq_new_start / runs);
-    printf("Bitowy + ograniczenie zakresu (multi):    %.4fs | avg %.6fs\n", total_bit_par_new_start, total_bit_par_new_start / runs);
-    printf("Klasyczny (1 rdzeń):                      %.4fs | avg %.6fs\n", total_std_seq, total_std_seq / runs);
-    printf("Klasyczny (multi):                        %.4fs | avg %.6fs\n", total_std_par, total_std_par / runs);
+    printf("Binary (1 core):                     %.4fs | avg %.6fs\n", total_bit_seq, total_bit_seq / runs);
+    printf("Binary (multicore):                  %.4fs | avg %.6fs\n", total_bit_par, total_bit_par / runs);
+    printf("Binary + reduced range (1 core):     %.4fs | avg %.6fs\n", total_bit_seq_new_start, total_bit_seq_new_start / runs);
+    printf("Binary + reduced range (multicore):  %.4fs | avg %.6fs\n", total_bit_par_new_start, total_bit_par_new_start / runs);
+    printf("Clasical (1 core):                   %.4fs | avg %.6fs\n", total_std_seq, total_std_seq / runs);
+    printf("Clasical (multicore):                %.4fs | avg %.6fs\n", total_std_par, total_std_par / runs);
     printf("------------------------------------------------------------\n");
-    printf("Przyspieszenie sekwencyjne:                         x%.2f\n", total_std_seq / total_bit_seq);
-    printf("Przyspieszenie sekwencyjne + ograniczenie zakresu:  x%.2f\n", total_std_seq / total_bit_seq_new_start);
-    printf("Przyspieszenie równoległe:                          x%.2f\n", total_std_par / total_bit_par);
-    printf("Przyspieszenie równoległe + ograniczenie zakresu:   x%.2f\n", total_std_par / total_bit_par_new_start);
+    printf("Sequential speedup:                       x%.2f\n", total_std_seq / total_bit_seq);
+    printf("Sequential speedup after reducing range:  x%.2f\n", total_std_seq / total_bit_seq_new_start);
+    printf("Parallel speedup:                         x%.2f\n", total_std_par / total_bit_par);
+    printf("Parallel speedup after reducing range:    x%.2f\n", total_std_par / total_bit_par_new_start);
     printf("============================================================\n");
 
     free_arrays(&arrays);

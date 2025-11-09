@@ -20,7 +20,7 @@ void gen_rand_num_range(elem_t *arr, long n) {
 int verify_sorted(const elem_t *arr, long n) {
     for (long i = 1; i < n; i++) {
         if (arr[i - 1] > arr[i]) {
-            fprintf(stderr, "Błąd sortowania przy indeksie %ld: %llu > %llu\n",
+            fprintf(stderr, "Sorting error at index %ld: %llu > %llu\n",
                     i, (unsigned long long)arr[i - 1], (unsigned long long)arr[i]);
             return 0;
         }
