@@ -222,9 +222,9 @@ Parallel speedup after reducing range:    x0.74
 
 Although I'd thought, I've discoverd something new, _**unfortunately**_ it seems not to be the case. I've tried to look for similar implementations, and was able  to find some earlier work, preceeding my _**strike of genious**_. So, as for anyone willing to continue work on this topic (including me in the future), I'm leaving references which I was able to find.
 
-https://github.com/michael105/bitsort
-https://github.com/yuempek/bitSort4
-https://github.com/GhOsttMan/bit-sort-algorithm
-https://rdrr.io/cran/bit/man/bitsort.html
-https://web.stanford.edu/class/archive/cs/cs166/cs166.1206/lectures/17/Small17.pdf
-https://www.researchgate.net/publication/259044206_The_Bitwise_Operations_Related_to_a_Fast_Sorting_Algorithm
+- https://github.com/michael105/bitsort
+- https://github.com/yuempek/bitSort4
+- https://github.com/GhOsttMan/bit-sort-algorithm
+- https://rdrr.io/cran/bit/man/bitsort.html
+- https://web.stanford.edu/class/archive/cs/cs166/cs166.1206/lectures/17/Small17.pdf
+- https://www.researchgate.net/publication/259044206_The_Bitwise_Operations_Related_to_a_Fast_Sorting_Algorithm
