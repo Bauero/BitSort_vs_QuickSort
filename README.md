@@ -18,15 +18,19 @@ And what if, instead of calculating pivot, we would split values the other way?
 -> Let's then, for each new round, simply pick value which is half of the startig value - by default we pick value which is half as big, as the biggest possible number which we can store as an integer which our number of bits
 
 So - if we use 64 bit long number, then we would start from:
+
 `10000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000`
 
 then:
+
 `01000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000`
 
 then
+
 `00100000 00000000 00000000 00000000 00000000 00000000 00000000 00000000`
 
 ...
+
 `00100000 00000000 00000000 00000000 00000000 00000000 00000000 00000001`
 
 ### Does it work?
