@@ -31,7 +31,7 @@ then
 
 ...
 
-`00100000 00000000 00000000 00000000 00000000 00000000 00000000 00000001`
+`00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000001`
 
 ### Does it work?
 Technically - yes. It's still QuickSort - we just alter the way we pick value. However, after I did it, and saw similar
