@@ -14,14 +14,17 @@ all: $(TARGET)
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
+${BINDIR}:
+	mkdir -p $(BINDIR)
+
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET): main.c $(OBJECTS)
+$(TARGET): main.c $(OBJECTS) ${BINDIR}
 	$(CC) $(CFLAGS) main.c $(OBJECTS) -o $(BINDIR)/$(TARGET)
 
 run: $(TARGET)
 	./$(BINDIR)/$(TARGET)
 
 clean:
-	rm -f $(TARGET) $(OBJECTS)
+	rm -r $(OBJDIR) $(BINDIR)
