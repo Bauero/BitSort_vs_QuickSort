@@ -1,8 +1,9 @@
 // generuj_liczby_losowe.h
-#ifndef GENERUJ_LICZBY_LOSOWE_H
-#define GENERUJ_LICZBY_LOSOWE_H
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 #include "qs_bin.h"
+#include "qs_bin_alt.h"
 #include "qs_std.h"
 #include "helpers.h"
 
