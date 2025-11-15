@@ -5,17 +5,8 @@
 
 // ----------------------------- CUSTOM STRUCTURES -----------------------------
 typedef struct {
-    elem_t *arr_base;
-    elem_t *arr_bit_seq;
-    elem_t *arr_bit_par;
-    elem_t *arr_bit_seq_shift;
-    elem_t *arr_bit_par_shift;
-    elem_t *arr_bit_alt_seq;
-    elem_t *arr_bit_alt_par;
-    elem_t *arr_bit_alt_seq_shift;
-    elem_t *arr_bit_alt_par_shift;
-    elem_t *arr_std_seq;
-    elem_t *arr_std_par;
+    elem_t *master_array;
+    elem_t *sorting_array;
 } array_list;
 
 // --------------------------------- FUNCTIONS ---------------------------------
@@ -26,39 +17,15 @@ static inline double now_sec(void) {
 }
 
 static void free_arrays(array_list *arrays) {
-    free(arrays->arr_base);
-    free(arrays->arr_bit_seq);
-    free(arrays->arr_bit_par);
-    free(arrays->arr_bit_seq_shift);
-    free(arrays->arr_bit_par_shift);
-    free(arrays->arr_bit_alt_seq);
-    free(arrays->arr_bit_alt_par);
-    free(arrays->arr_bit_alt_seq_shift);
-    free(arrays->arr_bit_alt_par_shift);
-    free(arrays->arr_std_seq);
-    free(arrays->arr_std_par);
+    free(arrays->master_array);
+    free(arrays->sorting_array);
 }
 
 static int create_arrays(array_list *arrays, long arr_size) {
-    arrays->arr_base                = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_seq             = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_par             = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_seq_shift       = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_par_shift       = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_alt_seq         = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_alt_par         = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_alt_seq_shift   = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_bit_alt_par_shift   = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_std_seq             = malloc(arr_size * sizeof(elem_t));
-    arrays->arr_std_par             = malloc(arr_size * sizeof(elem_t));
+    arrays->master_array  = malloc(arr_size * sizeof(elem_t));
+    arrays->sorting_array = malloc(arr_size * sizeof(elem_t));
     
-    if (!arrays->arr_base
-        || !arrays->arr_bit_seq || !arrays->arr_bit_par
-        || !arrays->arr_bit_seq_shift || !arrays->arr_bit_par_shift
-        || !arrays->arr_bit_alt_seq || !arrays->arr_bit_alt_par
-        || !arrays->arr_bit_alt_seq_shift || !arrays->arr_bit_alt_par_shift
-        || !arrays->arr_std_seq || !arrays->arr_std_par) {
-        
+    if (!arrays->master_array || !arrays->sorting_array) {
         free_arrays(arrays);
         perror("malloc failed");
         return -1;
@@ -66,20 +33,9 @@ static int create_arrays(array_list *arrays, long arr_size) {
     return 0;
 }
 
-static void refill_arrays(array_list arrays, long arr_size){
-    gen_rand_num_range(arrays.arr_base, arr_size);
+static void reset_sorting_array(array_list arrays, long arr_size) {
     for (long i = 0; i < arr_size; i++) {
-        // if (i < 1) printf("%ld\n",arrays.arr_base[i]);
-        arrays.arr_bit_seq[i]            = arrays.arr_base[i];
-        arrays.arr_bit_par[i]            = arrays.arr_base[i];
-        arrays.arr_bit_seq_shift[i]      = arrays.arr_base[i];
-        arrays.arr_bit_par_shift[i]      = arrays.arr_base[i];
-        arrays.arr_bit_alt_seq[i]        = arrays.arr_base[i];
-        arrays.arr_bit_alt_par[i]        = arrays.arr_base[i];
-        arrays.arr_bit_alt_seq_shift[i]  = arrays.arr_base[i];
-        arrays.arr_bit_alt_par_shift[i]  = arrays.arr_base[i];
-        arrays.arr_std_seq[i]            = arrays.arr_base[i];
-        arrays.arr_std_par[i]            = arrays.arr_base[i];
+        arrays.sorting_array[i] = arrays.master_array[i];
     }
 }
 
@@ -136,104 +92,113 @@ int main(int argc, char *argv[]) {
     for (int r = 0; r < runs; r++) {
         fprintf(stdout, ".");
         fflush(stdout);
-        refill_arrays(arrays, size);
+        gen_rand_num_range(arrays.master_array, size);
 
         // 1.  Binary sequential
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_sequential(arrays.arr_bit_seq, size - 1, enum_size);
+        qs_bin_sequential(arrays.sorting_array, size - 1, enum_size);
         end = now_sec();
         total_bit_seq += (end - start);
-        if (!verify_sorted(arrays.arr_bit_seq, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary sequential\n");
             break; 
         }
 
         // 2. Binary parallel
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_parallel(arrays.arr_bit_par, size - 1, enum_size);
+        qs_bin_parallel(arrays.sorting_array, size - 1, enum_size);
         end = now_sec();
         total_bit_par += (end - start);
-        if (!verify_sorted(arrays.arr_bit_par, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary parallel\n");
             break;
         }
         
         // 3. Binary sequential with initial reduction of starting bit
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_sequential(arrays.arr_bit_seq_shift, size - 1, initial_data_filter(arrays.arr_bit_seq_shift, size));
+        qs_bin_sequential(arrays.sorting_array, size - 1, initial_data_filter(arrays.sorting_array, size));
         end = now_sec();
         total_bit_seq_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_seq_shift, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting Binary sequential with initial reduction of starting bit\n");
             break; 
         }
 
         // 4. Binary parallel with initial reduction of starting bit
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_parallel(arrays.arr_bit_par_shift, size - 1, initial_data_filter(arrays.arr_bit_par_shift, size));
+        qs_bin_parallel(arrays.sorting_array, size - 1, initial_data_filter(arrays.sorting_array, size));
         end = now_sec();
         total_bit_par_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_par_shift, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary parallel with initial reduction of starting bit\n");
             break;
         }
         
         // 5.  Alternative binary sequential
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_sequential(arrays.arr_bit_alt_seq, size - 1, enum_size);
+        qs_bin_sequential(arrays.sorting_array, size - 1, enum_size);
         end = now_sec();
         total_bit_alt_seq += (end - start);
-        if (!verify_sorted(arrays.arr_bit_seq, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary sequential\n");
             break; 
         }
 
         // 6. Alternative binary parallel
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_parallel(arrays.arr_bit_alt_par, size - 1, enum_size);
+        qs_bin_parallel(arrays.sorting_array, size - 1, enum_size);
         end = now_sec();
         total_bit_alt_par += (end - start);
-        if (!verify_sorted(arrays.arr_bit_par, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary parallel\n");
             break;
         }
         
         // 7. Alternative binary sequential with initial reduction of starting bit
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_sequential(arrays.arr_bit_alt_seq_shift, size - 1, initial_data_filter(arrays.arr_bit_alt_seq_shift, size));
+        qs_bin_sequential(arrays.sorting_array, size - 1, initial_data_filter(arrays.sorting_array, size));
         end = now_sec();
         total_bit_alt_seq_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_alt_seq_shift, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting Binary sequential with initial reduction of starting bit\n");
             break; 
         }
 
         // 8. Alternative binary parallel with initial reduction of starting bit
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_bin_parallel(arrays.arr_bit_alt_par_shift, size - 1, initial_data_filter(arrays.arr_bit_alt_par_shift, size));
+        qs_bin_parallel(arrays.sorting_array, size - 1, initial_data_filter(arrays.sorting_array, size));
         end = now_sec();
         total_bit_alt_par_new_start += (end - start);
-        if (!verify_sorted(arrays.arr_bit_alt_par_shift, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting binary parallel with initial reduction of starting bit\n");
             break;
         }
 
         // 9. Clasical sequential Quicksort
+        reset_sorting_array(arrays, size);
         start = now_sec();
-        qs_std_sequential(arrays.arr_std_seq, size - 1);
+        qs_std_sequential(arrays.sorting_array, size - 1);
         end = now_sec();
         total_std_seq += (end - start);
-        if (!verify_sorted(arrays.arr_std_seq, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting clasical sequential Quicksort\n");
             break;
         }
 
         //10. Clasical parallel quicksort
         start = now_sec();
-        qs_std_parallel(arrays.arr_std_par, size -1);
+        qs_std_parallel(arrays.sorting_array, size -1);
         end = now_sec();
         total_std_par += (end - start);
-        if (!verify_sorted(arrays.arr_std_par, size)) {
+        if (!verify_sorted(arrays.sorting_array, size)) {
             fprintf(stderr,"Error with sorting clasical parallel quicksort\n");
             break;
         }
